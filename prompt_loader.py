@@ -11,7 +11,7 @@ lambdas = {
 
 prompts_path = os.path.join(os.path.dirname(__file__), './prompts2.csv')
 with open(prompts_path) as csvfile:
-    
+
     current_lambda = lambdas['ident']
     arg = None
     next(csvfile)

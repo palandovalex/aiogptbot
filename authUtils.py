@@ -1,36 +1,37 @@
 from logging import warning
 import os
 import json
+from aiogram.types import Message, CallbackQuery
 import hashlib
-from aiogram.types import Chat, Message,CallbackQuery
 from session import AioSession
-from constants import CHATBOT_HANDLE
+from constants import BOT_HANDLE
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-whitelist_path = os.path.join(dir_path,'../whiteList.json')
+whitelist_path = os.path.join(dir_path, '../whiteList.json')
 
 
 def loadKey(keyName):
     key = os.environ[keyName]
-    key_sha = hashlib.sha1(keyName.encode(encoding='UTF-8',errors='strict'))
+    key_sha = hashlib.sha1(keyName.encode(encoding='UTF-8', errors='strict'))
     warning(f"{keyName} fingerprint: {key_sha.hexdigest()}")
     return key
 
 
-with open(whitelist_path, 'r') as file:
+with open(whitelist_path, "r") as file:
     whiteList = json.load(file)
-    user_ids = whiteList['users']
-    chat_ids = whiteList['chats']
+    user_ids = whiteList["users"]
+    chat_ids = whiteList["chats"]
 
 
 def checkChat(chat_id: int):
     if chat_id in chat_ids:
-        return True;
+        return True
 
 
-def checkUser(user_id:int):
+def checkUser(user_id: int):
     if user_id in user_ids:
         return True
+
 
 def checkAuth(message: Message):
     chat_id = message.chat.id
@@ -48,17 +49,16 @@ def checkBotReaction(message: Message):
         warning(f"message from unrecognized user: {message}")
         return False
 
-
     if message.chat.type == 'private':
         return True
 
     if message.reply_to_message\
-            and message.reply_to_message.from_user.username == CHATBOT_HANDLE[1:]:
+            and message.reply_to_message.from_user.username == BOT_HANDLE[1:]:
         return True
 
     chat_id = message.chat.id
-    persName = AioSession.getSession(chat_id)._personality
     user_message = message.text
+    persName = AioSession.getSession(chat_id)._personality
     if (user_message):
         msg = message.text
         if user_message.startswith(persName):
@@ -66,8 +66,8 @@ def checkBotReaction(message: Message):
             msg = msg[1:]
             msg = persName.join(msg).strip()
 
-        elif CHATBOT_HANDLE in user_message:
-            msg = msg.replace(CHATBOT_HANDLE, '').strip()
+        elif BOT_HANDLE in user_message:
+            msg = msg.replace(BOT_HANDLE, '').strip()
 
         if msg != message.text:
             if msg.startswith(','):
@@ -75,4 +75,3 @@ def checkBotReaction(message: Message):
             message.text = msg
             return True
     return False
-    

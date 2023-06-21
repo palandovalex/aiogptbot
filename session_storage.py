@@ -1,26 +1,20 @@
 import os
 import json
 import sqlite3 as sl
-
-from logging import warning
 from typing import Protocol
 
 
-
 class SessionProtocol(Protocol):
-
     @classmethod
-    def fromData(cls, session_id:int, data:dict) -> 'SessionProtocol':
+    def fromData(cls, session_id: int, data: dict) -> 'SessionProtocol':
         '''create object of its type from raw dictionaty'''
-
 
 
 class SQLiteSessionStorage:
     def __new__(cls):
-        if not hasattr(cls,'_instance'):
+        if not hasattr(cls, '_instance'):
             cls._instance = super(SQLiteSessionStorage, cls).__new__(cls)
         return cls._instance
-
 
     def __init__(self):
         SQLITE_DB = os.getenv("SQLITE_DB")
@@ -39,16 +33,12 @@ class SQLiteSessionStorage:
             message_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER NOT NULL FOREGN KEY,
             content STRING NOT NULL,
-            
         );
-        
         """
         with self.connection as conn:
             cursor = conn.cursor()
             cursor.execute(create_table_query)
             conn.commit()
-
-
 
     def getSession(self, session_id):
         with self.connection as conn:
@@ -57,9 +47,8 @@ class SQLiteSessionStorage:
 
 class JsonSessionStorage:
 
-    activeSessions = {} 
+    activeSessions = {}
 
-        
     def __init__(self, Session: SessionProtocol):
         activeSessions = {}
 
@@ -67,10 +56,10 @@ class JsonSessionStorage:
 
         SESSIONS_DIR = os.getenv("BOT_SESSIONS_DIR")
         if not SESSIONS_DIR:
-            dir_path = os.path.dirname(os.path.realpath(__file__));
-            SESSIONS_DIR = os.path.join(dir_path,'../.aiosessions')
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            SESSIONS_DIR = os.path.join(dir_path, '../.aiosessions')
         self.DIR = SESSIONS_DIR
-        sessionFiles = os.scandir(self.DIR);
+        sessionFiles = os.scandir(self.DIR)
 
         for sessionFile in sessionFiles:
             session_id = int(sessionFile.name)
@@ -78,22 +67,17 @@ class JsonSessionStorage:
                 jsonStr = file.read()
 
             sessionData = json.loads(jsonStr)
-            
             self.activeSessions[session_id] = Session.fromData(session_id, sessionData)
 
         print(f'\n\nLoaded sessions: {self.activeSessions.keys()}\n')
 
-        
-
-
-    def save(self, session_id, sessionData:dict):
+    def save(self, session_id, sessionData: dict):
         session = self.getSession(session_id=session_id)
         session.__dict__.update(sessionData)
 
         filePath = os.path.join(self.DIR, str(session_id))
         with open(filePath, 'w') as file:
             json.dump(sessionData, file)
-
 
     def getSession(self, session_id):
         session_id = session_id
